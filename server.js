@@ -13,10 +13,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Initialize Firebase Admin SDK
-const serviceAccount = require('./ecub-v2-firebase-adminsdk-zsyka-dd83a2aad5.json');
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+if (!admin.apps.length) {
+    const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_BASE64, 'base64').toString());
+    admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount)
+    });
+}
 
 const db = admin.firestore();
 
@@ -149,6 +151,12 @@ app.get('/api/personalized-recommendations', async (req, res) => {
     }
 });
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+// Keep the app.listen() for local development
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(port, () => {
+        console.log(`Server is running on port ${port}`);
+    });
+}
+
+// Export the Express app for Vercel
+module.exports = app;
